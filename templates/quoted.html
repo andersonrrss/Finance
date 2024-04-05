@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Quote
+{% endblock %}
+
+{% block main %}
+    <div class="container-md" id="quotes">
+        <div class="mb-3">
+            <h4 class="d-inline-block">
+                Symbol:
+            </h4>
+            <p class="d-inline-block ml-4">{{ quote["symbol"] }}</p>
+        </div>
+        <div class="mb-3">
+            <h4 class="d-inline-block">
+                Price:
+            </h4>
+            <p class="d-inline-block ml-4">{{ quote["price"] | usd }}</p>
+        </div>
+    </div>
+    
+{% endblock %}
