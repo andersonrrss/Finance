@@ -299,13 +299,15 @@ def sell():
         # Inicia a conexão com o banco de dados
         conn = sqlite3.connect(DATABASE)
         db = conn.cursor()
-        # Atualiza o número de ações do usuário
-        actShares = db.execute("SELECT shares FROM buys WHERE user_id = ? AND symbol = ?", (user_id, symbol["symbol"])).fetchone()[0]
+       
+        actShares = db.execute("SELECT shares FROM buys WHERE user_id = ? AND symbol = ?", (user_id, symbol["symbol"])).fetchone()
+        #Checa se o usuário contém a ação
+        if actShares is None:
+            return apology("Você não tem essa ação")
         
-        print(actShares)
-
+        # Atualiza o número de ações do usuário
         newShares = actShares - shares
-        print(newShares)
+
         # Checa se ele tem ações suficientes
         if newShares < 0:
             return apology("Você não tem esse número de ações")
