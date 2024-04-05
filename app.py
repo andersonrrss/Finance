@@ -26,9 +26,8 @@ def after_request(response):
     response.headers["Pragma"] = "no-cache"
     return response
 
-DATABASE = "finance.db"
 def create_tables():
-    with sqlite3.connect(DATABASE) as conn:
+    with sqlite3.connect("finance.db") as conn:
         cursor = conn.cursor()
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -58,7 +57,7 @@ def index():
 @app.route("/stock")
 def stock():
     # Inicia a conexão com o banco de dados
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect("finance.db")
     db = conn.cursor()
 
     # Armazena os valores que serão mostrados
@@ -119,7 +118,7 @@ def buy():
         user_id = session["user_id"] 
 
         # Inicia a conexão com o banco de dados
-        conn = sqlite3.connect(DATABASE)
+        conn = sqlite3.connect("finance.db")
         db = conn.cursor()
         # Armazena a quantidade atual de dinheiro do usuário
         cash = db.execute("SELECT cash FROM users WHERE id = ?", (user_id,)).fetchone()[0]
@@ -160,7 +159,7 @@ def history():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in"""
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect("finance.db")
     db = conn.cursor()
     # Forget any user_id
     session.clear()
@@ -247,7 +246,7 @@ def register():
             return apology("Confirme sua senha")
         
         # Inicia a conexão com o banco de dados    
-        conn = sqlite3.connect(DATABASE)
+        conn = sqlite3.connect("finance.db")
         db = conn.cursor()
         checkname = db.execute("SELECT username FROM users WHERE username = ?", (username,)).fetchone()
         
@@ -297,7 +296,7 @@ def sell():
         
         user_id = session["user_id"]
         # Inicia a conexão com o banco de dados
-        conn = sqlite3.connect(DATABASE)
+        conn = sqlite3.connect("finance.db")
         db = conn.cursor()
         # Atualiza o número de ações do usuário
         actShares = db.execute("SELECT shares FROM buys WHERE user_id = ? AND symbol = ?", (user_id, symbol["symbol"])).fetchone()[0]
