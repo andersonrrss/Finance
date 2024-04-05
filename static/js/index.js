@@ -49,6 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <td></td>
             <td></td>
             <td>0</td>
+            <td>0</td>
             <td>${data.cash}
             <td>${data.total}</td>
         </tr>
