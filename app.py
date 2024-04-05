@@ -27,6 +27,28 @@ def after_request(response):
     return response
 
 
+def create_tables():
+    with sqlite3.connect("finance.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                username TEXT NOT NULL,
+                hash TEXT NOT NULL,
+                cash NUMERIC NOT NULL DEFAULT 10000.00
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS buys (
+                user_id INTEGER NOT NULL,
+                symbol TEXT UNIQUE NOT NULL,
+                shares NUMERIC NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ''')
+        conn.commit()
+
+
 @app.route("/")
 @login_required
 def index():
@@ -308,4 +330,5 @@ def sell():
 
 
 if __name__ == "__main__":
+    create_tables()
     app.run(debug=True)
