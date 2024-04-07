@@ -21,3 +21,43 @@ nav .navbar-brand .green
 {
     color: #2e944b;
 }
+
+.container-fluid{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+
+/* LOADER */
+.loader {
+    width: 2.2em;
+    height: 2.2em;
+    display: block;
+    position: relative;
+    animation: spinRing 3000ms linear infinite;
+  }
+  .loader::after{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    margin: auto;
+    height: auto;
+    width: auto;
+    border: 10px solid #1E4D92;
+    border-radius: 50%;
+    clip-path: polygon(50% 50%, 50% 0%, 100% 0%,100% 800%);
+    animation: spinRingInner 3000ms cubic-bezier(0.770, 0.000, 0.175, 1.000) infinite;
+  }
+  @keyframes spinRing {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes spinRingInner {
+    0%   { transform: rotate(-180deg); }
+    50%  { transform: rotate(-160deg); }
+    100% { transform: rotate(180deg); }
+  }

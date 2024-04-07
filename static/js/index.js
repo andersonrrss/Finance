@@ -10,6 +10,8 @@ document.addEventListener("DOMContentLoaded", function () {
     })
     .then((data) => {
       let html = "";
+      // Oculta o loader
+      document.getElementById("loader").style.display = "none"
       if (data.buys.length !== 0) {
         // Armazena a primeira linha e coloca as informações adicionais
         let firstQuote = data.buys.shift();

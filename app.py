@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import datetime
 
 from flask import Flask, flash, redirect, render_template, request, session, jsonify
 from flask_session import Session
@@ -46,6 +47,16 @@ def create_tables():
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         ''')
+        # Em Action se for 0/false é compra e se for 1/true é venda
+        cursor.execute(''' 
+            CREATE TABLE IF NOT EXISTS history (
+                user_id INTEGER FOREING KEY NOT NULL,
+                symbol TEXT NOT NULL,
+                action BOOLEAN,
+                shares NUMERIC NOT NULL,
+                date TIMESTAMP NOT NULL
+            );
+        ''')
         conn.commit()
 
 
@@ -63,24 +74,32 @@ def stock():
 
     # Armazena os valores que serão mostrados
     cash = db.execute("SELECT cash FROM users WHERE id = ?", (session["user_id"],)).fetchone()[0]
+
+    user_id = session["user_id"]
+
     buys = []
     totalQuotes = 0
     total = 0
 
-    quotes = db.execute("SELECT * FROM buys WHERE user_id = ?", (session["user_id"],)).fetchall()
-    for quote in quotes:
-        price = lookup(quote[1])["price"]
-        name = lookup(quote[1])["company_name"]
-        totalPrice = price * quote[2]
+    symbols = db.execute("SELECT symbol FROM buys WHERE user_id = ?", (user_id,)).fetchall()
+    for symbol in symbols:
+        symbol = symbol[0]
+
+        lookUp = lookup(symbol)
+        price = lookUp["price"]
+        name = lookUp["company_name"]
+
+        shares = db.execute("SELECT shares FROM buys WHERE user_id = ? AND symbol = ?", (user_id, symbol)).fetchone()[0]
+        totalPrice = price * shares
         # Armazena as informações de cada compania em forma de dicionário
         buys.append({
             "name": name,
-            "symbol": quote[1],
+            "symbol": symbol,
             "price": usd(price),
-            "shares": quote[2],
+            "shares": shares,
             "totalPrice": usd(totalPrice)
         })
-        totalQuotes += quote[2]
+        totalQuotes += shares
         total += totalPrice
 
     # JSON que será retornado ao FRONTEND
@@ -143,6 +162,9 @@ def buy():
         newCash = cash-price
         db.execute("UPDATE users SET cash = ? WHERE id = ?", (newCash, user_id))
 
+        # Atualiza o histórico do usuário
+        db.execute("INSERT INTO history (user_id, symbol,action,shares,date) VALUES (?,?,?,?,?)", (user_id, quote["symbol"], 0, shares, datetime.datetime.now()))
+
         conn.commit()
         conn.close()
         # Redireciona para a página principal
@@ -154,7 +176,39 @@ def buy():
 @login_required
 def history():
     """Show history of transactions"""
-    return apology("TODO")
+    return render_template("history.html")
+
+@app.route("/getHistory")
+@login_required
+def getHistory():
+    
+    
+    with sqlite3.connect(DATABASE) as conn:
+        user_id = session["user_id"]
+        
+        db = conn.cursor()
+        history = db.execute("SELECT * FROM history WHERE user_id = ?", (user_id,)).fetchall()
+
+        data = []
+        
+        if history:
+            for row in history:
+                price = lookup(row[1])["price"]
+                action = row[2]
+                if action:
+                    action = "Sell"
+                else:
+                    action = "Buy"
+                infos = {
+                    "action": action,
+                    "symbol": row[1],
+                    "price": usd(price*row[3]),
+                    "shares": row[3],
+                    "date": row[4]
+                }
+                data.append(infos)
+
+    return jsonify(data)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -277,11 +331,11 @@ def register():
 def sell():
     """Sell shares of stock"""
     if request.method == "POST":
-        symbol = lookup(request.form.get("symbol"))
+        quote = lookup(request.form.get("symbol"))
         shares = request.form.get("shares")
 
         # Checa se o usuário forneceu as informações
-        if not symbol:
+        if not quote:
             return apology("Insira um simbolo válido")
         
         if not shares:
@@ -300,7 +354,7 @@ def sell():
         conn = sqlite3.connect(DATABASE)
         db = conn.cursor()
        
-        actShares = db.execute("SELECT shares FROM buys WHERE user_id = ? AND symbol = ?", (user_id, symbol["symbol"])).fetchone()
+        actShares = db.execute("SELECT shares FROM buys WHERE user_id = ? AND symbol = ?", (user_id, quote["symbol"])).fetchone()[0]
         #Checa se o usuário contém a ação
         if actShares is None:
             return apology("Você não tem essa ação")
@@ -314,16 +368,20 @@ def sell():
         
         # Deleta a compania do perfil do usuário se ele vender todas as ações
         if newShares == 0:
-            db.execute("DELETE FROM buys WHERE user_id = ? AND symbol = ?", (user_id, symbol["symbol"]))
+            db.execute("DELETE FROM buys WHERE user_id = ? AND symbol = ?", (user_id, quote["symbol"]))
         else:
             # Atualiza o número de ações se ainda sobrarem
-            db.execute("UPDATE buys SET shares = ? WHERE user_id = ? AND symbol = ?", (newShares, user_id, symbol["symbol"]))
+            db.execute("UPDATE buys SET shares = ? WHERE user_id = ? AND symbol = ?", (newShares, user_id, quote["symbol"]))
+
 
         # Atualiza o saldo do usuário
         actCash = db.execute("SELECT cash FROM users WHERE id = ?", (user_id,)).fetchone()[0]
-        newCash = actCash + (symbol["price"] * shares)
+        newCash = actCash + (quote["price"] * shares)
         db.execute("UPDATE users SET cash = ? WHERE id = ?", (newCash, user_id))
 
+        # Atualiza o histórico do usuário
+        db.execute("INSERT INTO history (user_id, symbol,action,shares,date) VALUES (?,?,?,?,?)", (user_id, quote["symbol"], 1, shares, datetime.datetime.now()))
+        
         conn.commit()
         conn.close()
         return redirect("/")
