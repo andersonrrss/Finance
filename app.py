@@ -195,9 +195,9 @@ def getHistory():
                 price = lookup(row[1])["price"]
                 action = row[2]
                 if action:
-                    action = "Sell"
+                    action = "Venda"
                 else:
-                    action = "Buy"
+                    action = "Compra"
                 infos = {
                     "action": action,
                     "symbol": row[1],
@@ -221,21 +221,22 @@ def login():
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
         # Ensure username was submitted
-        if not request.form.get("username"):
-            return apology("must provide username", 403)
-
+        username = request.form.get("username")
+        if not username:
+            return apology("Digite um nome", 403)
         # Ensure password was submitted
         elif not request.form.get("password"):
-            return apology("must provide password", 403)
+            return apology("Digite uma senha", 403)
+        username = username.strip().capitalize()
 
         
         # Query database for username
-        db.execute("SELECT * FROM users WHERE username = ?", (request.form.get("username"),))
+        db.execute("SELECT * FROM users WHERE username LIKE ?", (username,))
         rows = db.fetchall()
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(rows[0][2], request.form.get("password")):
-            return apology("invalid username and/or password", 403)
+            return apology("nome ou senha invalido(s)", 403)
 
         # Remember which user has logged in
         session["user_id"] = rows[0][0]
@@ -292,6 +293,7 @@ def register():
         # Valida se as informações foram colocadas pelo usuário
         if not username:
             return apology("Digite seu nome")
+        username = username.strip().capitalize()
         
         if not password:
             return apology("Digite uma senha")
@@ -329,13 +331,16 @@ def register():
 @login_required
 def sell():
     """Sell shares of stock"""
+    user_id = session["user_id"]
+
     if request.method == "POST":
-        quote = lookup(request.form.get("symbol"))
+        symbol = request.form.get("symbol")
         shares = request.form.get("shares")
+       
 
         # Checa se o usuário forneceu as informações
-        if not quote:
-            return apology("Insira um simbolo válido")
+        if not symbol:
+            return apology("Insira um simbolo")
         
         if not shares:
             return apology("Insira a quantidade de ações a serem vendidas")
@@ -347,8 +352,11 @@ def sell():
                 return apology("Insira um número válido")
         except:
             return apology("Insira uma quantidade válida")
-        
-        user_id = session["user_id"]
+        # Checa se o simbolo é um símbolo válido
+        quote = lookup(symbol)
+        if not quote:
+            return apology("Insira um simbolo válido")
+
         # Inicia a conexão com o banco de dados
         conn = sqlite3.connect(DATABASE)
         db = conn.cursor()
@@ -384,8 +392,16 @@ def sell():
         conn.commit()
         conn.close()
         return redirect("/")
+    
+    with sqlite3.connect(DATABASE) as conn:
+        db = conn.cursor()
+        symbols = db.execute("SELECT symbol FROM buys WHERE user_id = ?", (user_id,)).fetchall()
+        if not symbols:
+            mensagem = "Compre ações primeiro"
+        else:
+            mensagem = "Escolha uma ação para ser vendida"
 
-    return render_template("sell.html")
+    return render_template("sell.html", mensagem=mensagem ,symbols=symbols)
 
 
 if __name__ == "__main__":

@@ -5,14 +5,14 @@
 {% endblock %}
 
 {% block main %}
-    <form action="/buy" method="post">
-        <div class="mb-3">
-            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="symbol" placeholder="Symbol" type="text">
+    <form action="/buy" method="post" style="display: flex; align-items: center; flex-direction: column;">
+        <div class="mb-3" style="width: 30%;">
+            <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Symbol" type="text" style="width: 100%;">
         </div>
-        <div class="mb-3">
-            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="shares" placeholder="Shares" type="number">
+        <div class="mb-3" style="width: 30%;">
+            <input autocomplete="off" autofocus class="form-control" name="shares" placeholder="Shares" type="number" style="width: 100%;">
         </div>
         
-        <button class="btn btn-primary" type="submit">Buy</button>
+        <button class="btn btn-primary" type="submit" style="width: 25%;">Buy</button>
     </form>
 {% endblock %}

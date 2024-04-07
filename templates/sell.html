@@ -5,12 +5,17 @@
 {% endblock %}
 
 {% block main %}
-<form action="/sell" method="post">
-    <div class="mb-3">
-        <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="symbol" placeholder="Symbol" type="text">
+<form action="/sell" method="post" style="display: flex;justify-content: center; align-items: center; flex-direction: column;">
+    <div class="mb-3" style="width: 30%;">
+        <select name="symbol" class="form-select form-control">
+            <option selected disabled>{{ mensagem }}</option>
+            {% for symbol in symbols %}
+                <option value="{{ symbol[0] }}">{{ symbol[0] }}</option>
+            {% endfor %}
+        </select>
     </div>
-    <div class="mb-3">
-        <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="shares" placeholder="Shares" type="number">
+    <div class="mb-3" style="width: 30%;">
+        <input autocomplete="off" autofocus class="form-control" name="shares" placeholder="Shares" type="number" style="width: 100%;">
     </div>
     
     <button class="btn btn-primary" type="submit">Sell</button>
