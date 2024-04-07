@@ -1,9 +1,3 @@
-import csv
-import datetime
-import pytz
-import requests
-import urllib
-import uuid
 import yfinance as yf
 
 from flask import redirect, render_template, session
